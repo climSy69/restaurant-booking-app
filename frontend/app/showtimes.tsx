@@ -81,7 +81,20 @@ export default function Showtimes() {
     }, [showId]);
 
     const handleBookNow = (showtime: Showtime) => {
-        console.log("Book showtime:", showtime.showtime_id);
+        if (!showtime.showtime_id) {
+            return;
+        }
+
+        router.push({
+            pathname: "/booking",
+            params: {
+                showtimeId: String(showtime.showtime_id),
+                showTitle: showTitle || "Show",
+                date: showtime.show_date,
+                time: showtime.show_time,
+                price: String(showtime.price),
+            },
+        });
     };
 
     if (loading) {

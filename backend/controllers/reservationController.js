@@ -1,27 +1,97 @@
 const db = require("../db");
 
 const createReservation = (req, res) => {
-    const { restaurant_id, reservation_date, guests } = req.body;
+    const { showtime_id, guests } = req.body;
     const user_id = req.user.id;
+    const selectedShowtimeId = Number(showtime_id);
+    const requestedGuests = Number(guests);
 
-    if (!restaurant_id || !reservation_date || !guests) {
+    if (!showtime_id || !guests) {
         return res.status(400).json({
             message: "All fields are required"
         });
     }
 
-    const query = `
-        INSERT INTO reservations (user_id, restaurant_id, reservation_date, guests)
-        VALUES (?, ?, ?, ?)
-    `;
+    if (
+        !Number.isInteger(selectedShowtimeId) ||
+        selectedShowtimeId <= 0 ||
+        !Number.isInteger(requestedGuests) ||
+        requestedGuests <= 0
+    ) {
+        return res.status(400).json({
+            message: "Invalid booking details"
+        });
+    }
 
-    db.query(query, [user_id, restaurant_id, reservation_date, guests], (err, result) => {
+    db.beginTransaction((err) => {
         if (err) {
             return res.status(500).json({ message: "Database error" });
         }
 
-        res.json({
-            message: "Reservation created successfully"
+        const showtimeQuery = `
+            SELECT available_seats
+            FROM showtimes
+            WHERE showtime_id = ?
+            FOR UPDATE
+        `;
+
+        db.query(showtimeQuery, [selectedShowtimeId], (err, showtimes) => {
+            if (err) {
+                return db.rollback(() => {
+                    res.status(500).json({ message: "Database error" });
+                });
+            }
+
+            if (showtimes.length === 0) {
+                return db.rollback(() => {
+                    res.status(404).json({ message: "Showtime not found" });
+                });
+            }
+
+            if (showtimes[0].available_seats < requestedGuests) {
+                return db.rollback(() => {
+                    res.status(400).json({ message: "Not enough available seats" });
+                });
+            }
+
+            const insertQuery = `
+                INSERT INTO reservations (user_id, showtime_id, guests)
+                VALUES (?, ?, ?)
+            `;
+
+            db.query(insertQuery, [user_id, selectedShowtimeId, requestedGuests], (err, result) => {
+                if (err) {
+                    return db.rollback(() => {
+                        res.status(500).json({ message: "Database error" });
+                    });
+                }
+
+                const updateShowtimeQuery = `
+                    UPDATE showtimes
+                    SET available_seats = available_seats - ?
+                    WHERE showtime_id = ?
+                `;
+
+                db.query(updateShowtimeQuery, [requestedGuests, selectedShowtimeId], (err, result) => {
+                    if (err) {
+                        return db.rollback(() => {
+                            res.status(500).json({ message: "Database error" });
+                        });
+                    }
+
+                    db.commit((err) => {
+                        if (err) {
+                            return db.rollback(() => {
+                                res.status(500).json({ message: "Database error" });
+                            });
+                        }
+
+                        res.json({
+                            message: "Reservation created successfully"
+                        });
+                    });
+                });
+            });
         });
     });
 };

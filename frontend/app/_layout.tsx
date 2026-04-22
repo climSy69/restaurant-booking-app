@@ -51,6 +51,7 @@ export default function RootLayout() {
         <Stack.Screen name="restaurants" options={{ title: 'Theatres' }} />
         <Stack.Screen name="shows" options={{ title: 'Shows' }} />
         <Stack.Screen name="showtimes" options={{ title: 'Showtimes' }} />
+        <Stack.Screen name="booking" options={{ title: 'Booking' }} />
         <Stack.Screen name="reservation-form" options={{ title: 'Reservation' }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>

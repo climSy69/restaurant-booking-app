@@ -5,6 +5,9 @@ require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
 const restaurantRoutes = require("./routes/restaurantRoutes");
+const theatreRoutes = require("./routes/theatreRoutes");
+const showRoutes = require("./routes/showRoutes");
+const showtimeRoutes = require("./routes/showtimeRoutes");
 
 const app = express();
 
@@ -14,6 +17,9 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/reservations", reservationRoutes);
+app.use("/api/theatres", theatreRoutes);
+app.use("/api/shows", showRoutes);
+app.use("/api/showtimes", showtimeRoutes);
 
 const PORT = process.env.PORT || 5000;
 
