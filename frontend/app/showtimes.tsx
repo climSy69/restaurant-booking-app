@@ -1,47 +1,24 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { router } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_URL = "http://192.168.1.226:5000/api/theatres";
+const API_URL = "http://192.168.1.226:5000/api/showtimes";
 
-type Theatre = {
-    theatre_id?: number;
-    name: string;
-    location: string;
-    description: string;
+type Showtime = {
+    showtime_id?: number;
+    show_date: string;
+    show_time: string;
+    available_seats: number;
+    price: number | string;
 };
 
-let theatresCache: Theatre[] | null = null;
-let theatresRequest: Promise<Theatre[]> | null = null;
-
-const loadTheatres = async () => {
-    if (theatresCache) {
-        return theatresCache;
-    }
-
-    if (!theatresRequest) {
-        theatresRequest = fetch(API_URL)
-            .then(async (response) => {
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data?.message || "Failed to load theatres");
-                }
-
-                theatresCache = data;
-                return data;
-            })
-            .finally(() => {
-                theatresRequest = null;
-            });
-    }
-
-    return theatresRequest;
-};
-
-export default function Restaurants() {
-    const [theatres, setTheatres] = useState<Theatre[]>([]);
+export default function Showtimes() {
+    const { showId, showTitle } = useLocalSearchParams<{
+        showId?: string;
+        showTitle?: string;
+    }>();
+    const [showtimes, setShowtimes] = useState<Showtime[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -59,12 +36,23 @@ export default function Restaurants() {
             return true;
         };
 
-        const fetchTheatres = async () => {
+        const fetchShowtimes = async () => {
+            if (!showId) {
+                setError("Show was not selected");
+                setLoading(false);
+                return;
+            }
+
             try {
-                const data = await loadTheatres();
+                const response = await fetch(`${API_URL}?showId=${encodeURIComponent(showId)}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data?.message || "Failed to load showtimes");
+                }
 
                 if (isMounted) {
-                    setTheatres(data);
+                    setShowtimes(data);
                 }
             } catch (fetchError: any) {
                 if (isMounted) {
@@ -81,7 +69,7 @@ export default function Restaurants() {
             const hasSession = await loadSession();
 
             if (hasSession) {
-                await fetchTheatres();
+                await fetchShowtimes();
             }
         };
 
@@ -90,61 +78,33 @@ export default function Restaurants() {
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [showId]);
 
-    const handleLogout = async () => {
-        await AsyncStorage.multiRemove(["token", "user"]);
-        router.replace("/login");
-    };
-
-    const handleViewShows = (theatre: Theatre) => {
-        if (!theatre.theatre_id) {
-            return;
-        }
-
-        router.push({
-            pathname: "/shows",
-            params: {
-                theatreId: String(theatre.theatre_id),
-                theatreName: theatre.name,
-            },
-        });
+    const handleBookNow = (showtime: Showtime) => {
+        console.log("Book showtime:", showtime.showtime_id);
     };
 
     if (loading) {
         return (
             <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "white" }}>
-                <Text style={{ color: "black" }}>Loading theatres...</Text>
+                <Text style={{ color: "black" }}>Loading showtimes...</Text>
             </View>
         );
     }
 
     return (
         <View style={{ flex: 1, backgroundColor: "white", padding: 20 }}>
-            <TouchableOpacity
-                onPress={handleLogout}
-                style={{
-                    alignSelf: "flex-end",
-                    backgroundColor: "black",
-                    paddingHorizontal: 16,
-                    paddingVertical: 10,
-                    marginBottom: 12,
-                }}
-            >
-                <Text style={{ color: "white" }}>Logout</Text>
-            </TouchableOpacity>
-
             <Text style={{ color: "black", fontSize: 24, fontWeight: "bold", marginBottom: 20 }}>
-                Theatres
+                {showTitle || "Showtimes"}
             </Text>
 
             {error ? (
                 <Text style={{ color: "black" }}>{error}</Text>
             ) : (
                 <ScrollView>
-                    {theatres.map((theatre, index) => (
+                    {showtimes.map((showtime, index) => (
                         <View
-                            key={theatre.theatre_id ?? index}
+                            key={showtime.showtime_id ?? index}
                             style={{
                                 borderWidth: 1,
                                 borderColor: "#ddd",
@@ -153,23 +113,26 @@ export default function Restaurants() {
                             }}
                         >
                             <Text style={{ color: "black", fontSize: 18, fontWeight: "bold" }}>
-                                {theatre.name}
+                                Date: {showtime.show_date}
                             </Text>
                             <Text style={{ color: "black", marginTop: 6 }}>
-                                Location: {theatre.location}
+                                Time: {showtime.show_time}
                             </Text>
                             <Text style={{ color: "black", marginTop: 6 }}>
-                                {theatre.description}
+                                Available seats: {showtime.available_seats}
+                            </Text>
+                            <Text style={{ color: "black", marginTop: 6 }}>
+                                Price: {showtime.price}
                             </Text>
                             <TouchableOpacity
-                                onPress={() => handleViewShows(theatre)}
+                                onPress={() => handleBookNow(showtime)}
                                 style={{
                                     backgroundColor: "blue",
                                     padding: 12,
                                     marginTop: 12,
                                 }}
                             >
-                                <Text style={{ color: "white", textAlign: "center" }}>View Shows</Text>
+                                <Text style={{ color: "white", textAlign: "center" }}>Book Now</Text>
                             </TouchableOpacity>
                         </View>
                     ))}

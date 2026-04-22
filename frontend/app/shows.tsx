@@ -1,47 +1,24 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { router } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_URL = "http://192.168.1.226:5000/api/theatres";
+const API_URL = "http://192.168.1.226:5000/api/shows";
 
-type Theatre = {
-    theatre_id?: number;
-    name: string;
-    location: string;
+type Show = {
+    show_id?: number;
+    title: string;
     description: string;
+    duration: number;
+    age_rating: string;
 };
 
-let theatresCache: Theatre[] | null = null;
-let theatresRequest: Promise<Theatre[]> | null = null;
-
-const loadTheatres = async () => {
-    if (theatresCache) {
-        return theatresCache;
-    }
-
-    if (!theatresRequest) {
-        theatresRequest = fetch(API_URL)
-            .then(async (response) => {
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data?.message || "Failed to load theatres");
-                }
-
-                theatresCache = data;
-                return data;
-            })
-            .finally(() => {
-                theatresRequest = null;
-            });
-    }
-
-    return theatresRequest;
-};
-
-export default function Restaurants() {
-    const [theatres, setTheatres] = useState<Theatre[]>([]);
+export default function Shows() {
+    const { theatreId, theatreName } = useLocalSearchParams<{
+        theatreId?: string;
+        theatreName?: string;
+    }>();
+    const [shows, setShows] = useState<Show[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -59,12 +36,23 @@ export default function Restaurants() {
             return true;
         };
 
-        const fetchTheatres = async () => {
+        const fetchShows = async () => {
+            if (!theatreId) {
+                setError("Theatre was not selected");
+                setLoading(false);
+                return;
+            }
+
             try {
-                const data = await loadTheatres();
+                const response = await fetch(`${API_URL}?theatreId=${encodeURIComponent(theatreId)}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data?.message || "Failed to load shows");
+                }
 
                 if (isMounted) {
-                    setTheatres(data);
+                    setShows(data);
                 }
             } catch (fetchError: any) {
                 if (isMounted) {
@@ -81,7 +69,7 @@ export default function Restaurants() {
             const hasSession = await loadSession();
 
             if (hasSession) {
-                await fetchTheatres();
+                await fetchShows();
             }
         };
 
@@ -90,23 +78,18 @@ export default function Restaurants() {
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [theatreId]);
 
-    const handleLogout = async () => {
-        await AsyncStorage.multiRemove(["token", "user"]);
-        router.replace("/login");
-    };
-
-    const handleViewShows = (theatre: Theatre) => {
-        if (!theatre.theatre_id) {
+    const handleViewShowtimes = (show: Show) => {
+        if (!show.show_id) {
             return;
         }
 
         router.push({
-            pathname: "/shows",
+            pathname: "/showtimes",
             params: {
-                theatreId: String(theatre.theatre_id),
-                theatreName: theatre.name,
+                showId: String(show.show_id),
+                showTitle: show.title,
             },
         });
     };
@@ -114,37 +97,24 @@ export default function Restaurants() {
     if (loading) {
         return (
             <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "white" }}>
-                <Text style={{ color: "black" }}>Loading theatres...</Text>
+                <Text style={{ color: "black" }}>Loading shows...</Text>
             </View>
         );
     }
 
     return (
         <View style={{ flex: 1, backgroundColor: "white", padding: 20 }}>
-            <TouchableOpacity
-                onPress={handleLogout}
-                style={{
-                    alignSelf: "flex-end",
-                    backgroundColor: "black",
-                    paddingHorizontal: 16,
-                    paddingVertical: 10,
-                    marginBottom: 12,
-                }}
-            >
-                <Text style={{ color: "white" }}>Logout</Text>
-            </TouchableOpacity>
-
             <Text style={{ color: "black", fontSize: 24, fontWeight: "bold", marginBottom: 20 }}>
-                Theatres
+                {theatreName || "Shows"}
             </Text>
 
             {error ? (
                 <Text style={{ color: "black" }}>{error}</Text>
             ) : (
                 <ScrollView>
-                    {theatres.map((theatre, index) => (
+                    {shows.map((show, index) => (
                         <View
-                            key={theatre.theatre_id ?? index}
+                            key={show.show_id ?? index}
                             style={{
                                 borderWidth: 1,
                                 borderColor: "#ddd",
@@ -153,23 +123,26 @@ export default function Restaurants() {
                             }}
                         >
                             <Text style={{ color: "black", fontSize: 18, fontWeight: "bold" }}>
-                                {theatre.name}
+                                {show.title}
                             </Text>
                             <Text style={{ color: "black", marginTop: 6 }}>
-                                Location: {theatre.location}
+                                {show.description}
                             </Text>
                             <Text style={{ color: "black", marginTop: 6 }}>
-                                {theatre.description}
+                                Duration: {show.duration} minutes
+                            </Text>
+                            <Text style={{ color: "black", marginTop: 6 }}>
+                                Age rating: {show.age_rating}
                             </Text>
                             <TouchableOpacity
-                                onPress={() => handleViewShows(theatre)}
+                                onPress={() => handleViewShowtimes(show)}
                                 style={{
                                     backgroundColor: "blue",
                                     padding: 12,
                                     marginTop: 12,
                                 }}
                             >
-                                <Text style={{ color: "white", textAlign: "center" }}>View Shows</Text>
+                                <Text style={{ color: "white", textAlign: "center" }}>View Showtimes</Text>
                             </TouchableOpacity>
                         </View>
                     ))}
