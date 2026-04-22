@@ -48,10 +48,12 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ title: 'Login' }} />
+        <Stack.Screen name="register" options={{ title: 'Register' }} />
         <Stack.Screen name="theatres" options={{ title: 'Theatres' }} />
         <Stack.Screen name="shows" options={{ title: 'Shows' }} />
         <Stack.Screen name="showtimes" options={{ title: 'Showtimes' }} />
         <Stack.Screen name="booking" options={{ title: 'Booking' }} />
+        <Stack.Screen name="my-bookings" options={{ title: 'My Bookings' }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />

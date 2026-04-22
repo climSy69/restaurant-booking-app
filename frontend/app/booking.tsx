@@ -2,6 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { formatDisplayDate, formatPrice, getNumericPrice } from "../utils/formatters";
+import { ui } from "../utils/theme";
 
 const API_URL = "http://192.168.1.226:5000/api/reservations";
 
@@ -23,6 +25,7 @@ export default function Booking() {
     }>();
     const [guests, setGuests] = useState(1);
     const [submitting, setSubmitting] = useState(false);
+    const totalPrice = getNumericPrice(price) * guests;
 
     const handleConfirmBooking = async () => {
         const selectedShowtimeId = Number(showtimeId);
@@ -80,76 +83,60 @@ export default function Booking() {
     };
 
     return (
-        <ScrollView style={{ flex: 1, backgroundColor: "white" }} contentContainerStyle={{ padding: 20 }}>
-            <Text style={{ color: "black", fontSize: 24, fontWeight: "bold", marginBottom: 20 }}>
-                {showTitle || "Booking"}
-            </Text>
+        <ScrollView style={ui.screen} contentContainerStyle={ui.scrollContent}>
+            <TouchableOpacity onPress={() => router.push("/theatres")} style={ui.homeButton}>
+                <Text style={ui.homeButtonText}>Home</Text>
+            </TouchableOpacity>
+
+            <Text style={ui.title}>{showTitle || "Booking"}</Text>
+            <Text style={ui.subtitle}>Review your showtime and choose the number of guests.</Text>
 
             <View
-                style={{
-                    borderWidth: 1,
-                    borderColor: "#ddd",
-                    padding: 15,
-                    marginBottom: 20,
-                }}
+                style={ui.card}
             >
-                <Text style={{ color: "black", fontSize: 16, marginBottom: 8 }}>Date: {date || "-"}</Text>
-                <Text style={{ color: "black", fontSize: 16, marginBottom: 8 }}>Time: {time || "-"}</Text>
-                <Text style={{ color: "black", fontSize: 16 }}>Price: {price || "-"}</Text>
+                <Text style={ui.cardTitle}>Showtime Details</Text>
+                <Text style={ui.detailText}>Date: {formatDisplayDate(date)}</Text>
+                <Text style={ui.detailText}>Time: {time || "-"}</Text>
+                <Text style={ui.detailText}>Seat price: {formatPrice(price)}</Text>
             </View>
 
-            <Text style={{ color: "black", fontSize: 16, fontWeight: "600", marginBottom: 8 }}>Guests</Text>
+            <Text style={ui.sectionTitle}>Guests</Text>
             <View
-                style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    borderWidth: 1,
-                    borderColor: "#ddd",
-                    padding: 12,
-                    marginBottom: 20,
-                }}
+                style={ui.stepperCard}
             >
                 <TouchableOpacity
                     onPress={() => setGuests((currentGuests) => Math.max(1, currentGuests - 1))}
                     disabled={guests <= 1}
-                    style={{
-                        width: 44,
-                        height: 44,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backgroundColor: guests <= 1 ? "#eee" : "black",
-                    }}
+                    style={[ui.stepperButton, guests <= 1 && ui.stepperButtonDisabled]}
                 >
-                    <Text style={{ color: guests <= 1 ? "#777" : "white", fontSize: 24 }}>-</Text>
+                    <Text style={[ui.stepperButtonText, guests <= 1 && ui.stepperButtonTextDisabled]}>-</Text>
                 </TouchableOpacity>
 
-                <Text style={{ color: "black", fontSize: 22, fontWeight: "600" }}>{guests}</Text>
+                <Text style={ui.guestCount}>{guests}</Text>
 
                 <TouchableOpacity
                     onPress={() => setGuests((currentGuests) => Math.min(12, currentGuests + 1))}
                     disabled={guests >= 12}
-                    style={{
-                        width: 44,
-                        height: 44,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backgroundColor: guests >= 12 ? "#eee" : "black",
-                    }}
+                    style={[ui.stepperButton, guests >= 12 && ui.stepperButtonDisabled]}
                 >
-                    <Text style={{ color: guests >= 12 ? "#777" : "white", fontSize: 24 }}>+</Text>
+                    <Text style={[ui.stepperButtonText, guests >= 12 && ui.stepperButtonTextDisabled]}>+</Text>
                 </TouchableOpacity>
+            </View>
+
+            <View
+                style={ui.card}
+            >
+                <Text style={ui.totalText}>
+                    Total price: {formatPrice(totalPrice)}
+                </Text>
             </View>
 
             <TouchableOpacity
                 onPress={handleConfirmBooking}
                 disabled={submitting}
-                style={{
-                    backgroundColor: submitting ? "#777" : "blue",
-                    padding: 15,
-                }}
+                style={[ui.button, submitting && ui.buttonDisabled]}
             >
-                <Text style={{ color: "white", textAlign: "center" }}>
+                <Text style={ui.buttonText}>
                     {submitting ? "Confirming..." : "Confirm Booking"}
                 </Text>
             </TouchableOpacity>

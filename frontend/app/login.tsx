@@ -1,7 +1,8 @@
-import { View, Text, TextInput, Alert, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, Alert, TouchableOpacity, ScrollView } from "react-native";
 import { useState } from "react";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ui } from "../utils/theme";
 
 const API_URL = "http://192.168.1.226:5000/api/auth/login";
 
@@ -76,29 +77,23 @@ export default function Login() {
     };
 
     return (
-        <View style={{ flex: 1, padding: 20, backgroundColor: "white" }}>
-            <Text style={{ color: "black" }}>Email</Text>
+        <ScrollView style={ui.screen} contentContainerStyle={ui.authContent} keyboardShouldPersistTaps="handled">
+            <View style={ui.authCard}>
+                <Text style={ui.title}>Theatre Booking</Text>
+                <Text style={ui.subtitle}>Sign in to browse shows, reserve seats, and manage your bookings.</Text>
+
+            <Text style={ui.label}>Email</Text>
             <TextInput
-                style={{
-                    borderWidth: 1,
-                    marginBottom: 10,
-                    padding: 10,
-                    backgroundColor: "white",
-                    color: "black",
-                }}
+                style={ui.input}
                 value={email}
                 onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
             />
 
-            <Text style={{ color: "black" }}>Password</Text>
+            <Text style={ui.label}>Password</Text>
             <TextInput
-                style={{
-                    borderWidth: 1,
-                    marginBottom: 10,
-                    padding: 10,
-                    backgroundColor: "white",
-                    color: "black",
-                }}
+                style={ui.input}
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
@@ -106,14 +101,18 @@ export default function Login() {
 
             <TouchableOpacity
                 onPress={handleLogin}
-                style={{
-                    backgroundColor: "blue",
-                    padding: 15,
-                    marginTop: 10,
-                }}
+                style={ui.button}
             >
-                <Text style={{ color: "white", textAlign: "center" }}>LOGIN</Text>
+                <Text style={ui.buttonText}>LOGIN</Text>
             </TouchableOpacity>
-        </View>
+
+            <TouchableOpacity
+                onPress={() => router.push("/register")}
+                style={ui.linkButton}
+            >
+                <Text style={ui.linkText}>Don't have an account? Register</Text>
+            </TouchableOpacity>
+            </View>
+        </ScrollView>
     );
 }

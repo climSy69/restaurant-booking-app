@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ui } from "../utils/theme";
 
 const API_URL = "http://192.168.1.226:5000/api/shows";
 
@@ -96,58 +97,56 @@ export default function Shows() {
 
     if (loading) {
         return (
-            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "white" }}>
-                <Text style={{ color: "black" }}>Loading shows...</Text>
+            <View style={ui.centeredScreen}>
+                <Text style={ui.loadingText}>Loading shows...</Text>
             </View>
         );
     }
 
     return (
-        <View style={{ flex: 1, backgroundColor: "white", padding: 20 }}>
-            <Text style={{ color: "black", fontSize: 24, fontWeight: "bold", marginBottom: 20 }}>
-                {theatreName || "Shows"}
-            </Text>
+        <View style={ui.screen}>
+            <View style={ui.content}>
+            <TouchableOpacity onPress={() => router.push("/theatres")} style={ui.homeButton}>
+                <Text style={ui.homeButtonText}>Home</Text>
+            </TouchableOpacity>
+
+            <Text style={ui.title}>{theatreName || "Shows"}</Text>
+            <Text style={ui.subtitle}>Select a show to see dates, times, and ticket prices.</Text>
 
             {error ? (
-                <Text style={{ color: "black" }}>{error}</Text>
+                <View style={ui.errorCard}>
+                    <Text style={ui.errorText}>{error}</Text>
+                </View>
             ) : (
-                <ScrollView>
+                <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
                     {shows.map((show, index) => (
                         <View
                             key={show.show_id ?? index}
-                            style={{
-                                borderWidth: 1,
-                                borderColor: "#ddd",
-                                padding: 15,
-                                marginBottom: 12,
-                            }}
+                            style={ui.card}
                         >
-                            <Text style={{ color: "black", fontSize: 18, fontWeight: "bold" }}>
+                            <Text style={ui.cardTitle}>
                                 {show.title}
                             </Text>
-                            <Text style={{ color: "black", marginTop: 6 }}>
+                            <Text style={ui.bodyText}>
                                 {show.description}
                             </Text>
-                            <Text style={{ color: "black", marginTop: 6 }}>
+                            <Text style={ui.metaText}>
                                 Duration: {show.duration} minutes
                             </Text>
-                            <Text style={{ color: "black", marginTop: 6 }}>
+                            <Text style={ui.metaText}>
                                 Age rating: {show.age_rating}
                             </Text>
                             <TouchableOpacity
                                 onPress={() => handleViewShowtimes(show)}
-                                style={{
-                                    backgroundColor: "blue",
-                                    padding: 12,
-                                    marginTop: 12,
-                                }}
+                                style={ui.button}
                             >
-                                <Text style={{ color: "white", textAlign: "center" }}>View Showtimes</Text>
+                                <Text style={ui.buttonText}>View Showtimes</Text>
                             </TouchableOpacity>
                         </View>
                     ))}
                 </ScrollView>
             )}
+            </View>
         </View>
     );
 }

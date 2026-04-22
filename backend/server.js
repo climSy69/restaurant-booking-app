@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const reservationRoutes = require("./routes/reservationRoutes");
+const userRoutes = require("./routes/userRoutes");
 const theatreRoutes = require("./routes/theatreRoutes");
 const showRoutes = require("./routes/showRoutes");
 const showtimeRoutes = require("./routes/showtimeRoutes");
@@ -15,6 +16,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/reservations", reservationRoutes);
+app.use("/api/user", userRoutes);
 app.use("/api/theatres", theatreRoutes);
 app.use("/api/shows", showRoutes);
 app.use("/api/showtimes", showtimeRoutes);

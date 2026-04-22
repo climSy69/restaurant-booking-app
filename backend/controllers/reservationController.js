@@ -101,18 +101,22 @@ const getMyReservations = (req, res) => {
 
     const query = `
         SELECT
-            reservations.*,
-            shows.title AS show_title,
-            theatres.name AS theatre_name,
+            reservations.id,
+            reservations.guests,
+            reservations.created_at,
+            reservations.showtime_id,
             showtimes.show_date,
             showtimes.show_time,
-            showtimes.price
+            showtimes.price,
+            shows.title AS show_title,
+            theatres.name AS theatre_name,
+            theatres.location AS theatre_location
         FROM reservations
         JOIN showtimes ON reservations.showtime_id = showtimes.showtime_id
         JOIN shows ON showtimes.show_id = shows.show_id
         JOIN theatres ON shows.theatre_id = theatres.theatre_id
         WHERE reservations.user_id = ?
-        ORDER BY showtimes.show_date, showtimes.show_time
+        ORDER BY showtimes.show_date ASC, showtimes.show_time ASC
     `;
 
     db.query(query, [user_id], (err, results) => {
@@ -125,27 +129,82 @@ const getMyReservations = (req, res) => {
 };
 
 const deleteReservation = (req, res) => {
-    const reservation_id = req.params.id;
+    const reservation_id = Number(req.params.id);
     const user_id = req.user.id;
 
-    const query = `
-        DELETE FROM reservations
-        WHERE id = ? AND user_id = ?
-    `;
+    if (!Number.isInteger(reservation_id) || reservation_id <= 0) {
+        return res.status(400).json({
+            message: "Invalid reservation id"
+        });
+    }
 
-    db.query(query, [reservation_id, user_id], (err, result) => {
+    db.beginTransaction((err) => {
         if (err) {
             return res.status(500).json({ message: "Database error" });
         }
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({
-                message: "Reservation not found or not yours"
+        const rollbackWithResponse = (statusCode, message) => {
+            db.rollback(() => {
+                res.status(statusCode).json({ message });
             });
-        }
+        };
 
-        res.json({
-            message: "Reservation deleted successfully"
+        const reservationQuery = `
+            SELECT id, user_id, showtime_id, guests
+            FROM reservations
+            WHERE id = ?
+            FOR UPDATE
+        `;
+
+        db.query(reservationQuery, [reservation_id], (err, reservations) => {
+            if (err) {
+                return rollbackWithResponse(500, "Database error");
+            }
+
+            if (reservations.length === 0) {
+                return rollbackWithResponse(404, "Reservation not found");
+            }
+
+            const reservation = reservations[0];
+
+            if (String(reservation.user_id) !== String(user_id)) {
+                return rollbackWithResponse(403, "You are not authorized to cancel this reservation");
+            }
+
+            const deleteQuery = `
+                DELETE FROM reservations
+                WHERE id = ?
+            `;
+
+            db.query(deleteQuery, [reservation_id], (err) => {
+                if (err) {
+                    return rollbackWithResponse(500, "Database error");
+                }
+
+                const restoreSeatsQuery = `
+                    UPDATE showtimes
+                    SET available_seats = available_seats + ?
+                    WHERE showtime_id = ?
+                `;
+
+                db.query(restoreSeatsQuery, [reservation.guests, reservation.showtime_id], (err) => {
+                    if (err) {
+                        return rollbackWithResponse(500, "Database error");
+                    }
+
+                    db.commit((err) => {
+                        if (err) {
+                            return db.rollback(() => {
+                                res.status(500).json({ message: "Database error" });
+                            });
+                        }
+
+                        res.json({
+                            message: "Reservation cancelled successfully"
+                        });
+                    });
+                });
+            });
         });
     });
 };

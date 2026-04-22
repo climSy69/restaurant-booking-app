@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ui } from "../utils/theme";
 
 const API_URL = "http://192.168.1.226:5000/api/theatres";
 
@@ -113,68 +114,65 @@ export default function Theatres() {
 
     if (loading) {
         return (
-            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "white" }}>
-                <Text style={{ color: "black" }}>Loading theatres...</Text>
+            <View style={ui.centeredScreen}>
+                <Text style={ui.loadingText}>Loading theatres...</Text>
             </View>
         );
     }
 
     return (
-        <View style={{ flex: 1, backgroundColor: "white", padding: 20 }}>
-            <TouchableOpacity
-                onPress={handleLogout}
-                style={{
-                    alignSelf: "flex-end",
-                    backgroundColor: "black",
-                    paddingHorizontal: 16,
-                    paddingVertical: 10,
-                    marginBottom: 12,
-                }}
-            >
-                <Text style={{ color: "white" }}>Logout</Text>
-            </TouchableOpacity>
+        <View style={ui.screen}>
+            <View style={ui.content}>
+            <View style={ui.topActions}>
+                <TouchableOpacity
+                    onPress={() => router.push("/my-bookings")}
+                    style={ui.smallButton}
+                >
+                    <Text style={ui.smallButtonText}>My Bookings</Text>
+                </TouchableOpacity>
 
-            <Text style={{ color: "black", fontSize: 24, fontWeight: "bold", marginBottom: 20 }}>
-                Theatres
-            </Text>
+                <TouchableOpacity
+                    onPress={handleLogout}
+                    style={[ui.smallButton, ui.buttonDark]}
+                >
+                    <Text style={ui.smallButtonText}>Logout</Text>
+                </TouchableOpacity>
+            </View>
+
+            <Text style={ui.title}>Theatres</Text>
+            <Text style={ui.subtitle}>Choose a theatre to view its available shows.</Text>
 
             {error ? (
-                <Text style={{ color: "black" }}>{error}</Text>
+                <View style={ui.errorCard}>
+                    <Text style={ui.errorText}>{error}</Text>
+                </View>
             ) : (
-                <ScrollView>
+                <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
                     {theatres.map((theatre, index) => (
                         <View
                             key={theatre.theatre_id ?? index}
-                            style={{
-                                borderWidth: 1,
-                                borderColor: "#ddd",
-                                padding: 15,
-                                marginBottom: 12,
-                            }}
+                            style={ui.card}
                         >
-                            <Text style={{ color: "black", fontSize: 18, fontWeight: "bold" }}>
+                            <Text style={ui.cardTitle}>
                                 {theatre.name}
                             </Text>
-                            <Text style={{ color: "black", marginTop: 6 }}>
+                            <Text style={ui.metaText}>
                                 Location: {theatre.location}
                             </Text>
-                            <Text style={{ color: "black", marginTop: 6 }}>
+                            <Text style={[ui.bodyText, { marginTop: 8 }]}>
                                 {theatre.description}
                             </Text>
                             <TouchableOpacity
                                 onPress={() => handleViewShows(theatre)}
-                                style={{
-                                    backgroundColor: "blue",
-                                    padding: 12,
-                                    marginTop: 12,
-                                }}
+                                style={ui.button}
                             >
-                                <Text style={{ color: "white", textAlign: "center" }}>View Shows</Text>
+                                <Text style={ui.buttonText}>View Shows</Text>
                             </TouchableOpacity>
                         </View>
                     ))}
                 </ScrollView>
             )}
+            </View>
         </View>
     );
 }

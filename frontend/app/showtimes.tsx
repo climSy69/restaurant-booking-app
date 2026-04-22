@@ -2,6 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { formatDisplayDate, formatPrice } from "../utils/formatters";
+import { ui } from "../utils/theme";
 
 const API_URL = "http://192.168.1.226:5000/api/showtimes";
 
@@ -99,58 +101,56 @@ export default function Showtimes() {
 
     if (loading) {
         return (
-            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "white" }}>
-                <Text style={{ color: "black" }}>Loading showtimes...</Text>
+            <View style={ui.centeredScreen}>
+                <Text style={ui.loadingText}>Loading showtimes...</Text>
             </View>
         );
     }
 
     return (
-        <View style={{ flex: 1, backgroundColor: "white", padding: 20 }}>
-            <Text style={{ color: "black", fontSize: 24, fontWeight: "bold", marginBottom: 20 }}>
-                {showTitle || "Showtimes"}
-            </Text>
+        <View style={ui.screen}>
+            <View style={ui.content}>
+            <TouchableOpacity onPress={() => router.push("/theatres")} style={ui.homeButton}>
+                <Text style={ui.homeButtonText}>Home</Text>
+            </TouchableOpacity>
+
+            <Text style={ui.title}>{showTitle || "Showtimes"}</Text>
+            <Text style={ui.subtitle}>Pick a showtime and continue to booking.</Text>
 
             {error ? (
-                <Text style={{ color: "black" }}>{error}</Text>
+                <View style={ui.errorCard}>
+                    <Text style={ui.errorText}>{error}</Text>
+                </View>
             ) : (
-                <ScrollView>
+                <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
                     {showtimes.map((showtime, index) => (
                         <View
                             key={showtime.showtime_id ?? index}
-                            style={{
-                                borderWidth: 1,
-                                borderColor: "#ddd",
-                                padding: 15,
-                                marginBottom: 12,
-                            }}
+                            style={ui.card}
                         >
-                            <Text style={{ color: "black", fontSize: 18, fontWeight: "bold" }}>
-                                Date: {showtime.show_date}
+                            <Text style={ui.cardTitle}>
+                                Date: {formatDisplayDate(showtime.show_date)}
                             </Text>
-                            <Text style={{ color: "black", marginTop: 6 }}>
+                            <Text style={ui.detailText}>
                                 Time: {showtime.show_time}
                             </Text>
-                            <Text style={{ color: "black", marginTop: 6 }}>
+                            <Text style={ui.detailText}>
                                 Available seats: {showtime.available_seats}
                             </Text>
-                            <Text style={{ color: "black", marginTop: 6 }}>
-                                Price: {showtime.price}
+                            <Text style={ui.detailText}>
+                                Price: {formatPrice(showtime.price)}
                             </Text>
                             <TouchableOpacity
                                 onPress={() => handleBookNow(showtime)}
-                                style={{
-                                    backgroundColor: "blue",
-                                    padding: 12,
-                                    marginTop: 12,
-                                }}
+                                style={ui.button}
                             >
-                                <Text style={{ color: "white", textAlign: "center" }}>Book Now</Text>
+                                <Text style={ui.buttonText}>Book Now</Text>
                             </TouchableOpacity>
                         </View>
                     ))}
                 </ScrollView>
             )}
+            </View>
         </View>
     );
 }
