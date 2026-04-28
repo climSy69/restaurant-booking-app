@@ -4,16 +4,20 @@ A full-stack mobile theatre booking application built with **React Native (Expo)
 
 ## Features
 
-- JWT login and authentication
-- Session persistence with AsyncStorage
-- Auto login on app start
-- Logout functionality
-- Theatres list from the backend API
-- Shows list by theatre
-- Showtimes list by show
+- Register / Login authentication
+- JWT authentication
+- Session persistence
+- Auto login
+- Logout
+- Browse theatres
+- Browse shows by theatre
+- Browse showtimes
 - Booking flow with guest selection
-- MySQL backend REST API
-- Simple mobile-friendly UI
+- My Bookings page
+- Cancel booking
+- Home navigation button
+- Modern polished mobile UI
+- REST API backend
 
 ## Tech Stack
 
@@ -55,18 +59,20 @@ npx expo start
 ## Screens
 
 - Login Screen
+- Register Screen
 - Theatres Screen
 - Shows Screen
 - Showtimes Screen
 - Booking Screen
+- My Bookings Screen
 
 ## Future Improvements
 
-- Register Page
-- Admin Dashboard
-- Profile Page
-- Search Theatres and Shows
-- Booking History
+- Edit booking
+- Admin dashboard
+- Search & filters
+- Push notifications
+- Payment integration
 
 ## Author
 
