@@ -41,3 +41,8 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Local environment overrides (do not commit real .env files)
+.env
+.env.local
+.env.*.local
